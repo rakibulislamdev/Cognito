@@ -1,10 +1,10 @@
 "use client"
 import { createContext, useContext } from "react";
-import { Message } from "@/lib/types/conversation";
+import { Conversation } from "@/lib/types/conversation";
 
 interface ChatContextType {
-    messages: Message[];
-    addNewMessage: (content: string) => void;
+    conversations: Conversation[];
+    addNewMessage: (content: string, conversationId?: string) => void;
 }
 
 
