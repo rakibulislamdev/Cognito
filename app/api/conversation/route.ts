@@ -57,3 +57,49 @@ export async function GET() {
     return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
   }
 }
+
+export async function PATCH(req: Request) {
+  try {
+    await connectDB();
+    const { conversationId, messageId, content } = await req.json();
+
+    // ১. প্রথমে পুরো কনভারসেশনটি খুঁজে বের করি
+    const conversation = await Conversations.findById(conversationId);
+
+    if (!conversation) {
+      return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+    }
+
+    // ২. যে মেসেজটি এডিট করা হয়েছে, সেটির পজিশন (Index) খুঁজে বের করি
+    const msgIndex = conversation.messages.findIndex(
+      (m: any) => m._id.toString() === messageId
+    );
+
+    if (msgIndex !== -1) {
+      // ৩. ওই মেসেজের নতুন টেক্সট সেট করি
+      conversation.messages[msgIndex].content = content;
+
+      // ৪. যাদুর লাইন: এই মেসেজের পরে যা যা আছে (পুরোনো AI রিপ্লাই) সব মুছে ফেলি
+      // splice(index + 1) মানে হলো এই পজিশনের পরের সব ডিলিট
+      conversation.messages.splice(msgIndex + 1);
+
+      // ৫. এখন নতুন কন্টেন্ট নিয়ে AI থেকে রিপ্লাই আনি
+      const aiReply = await generateGeminiReply(content);
+
+      // ৬. নতুন AI রিপ্লাইটি চ্যাটে যোগ করি
+      conversation.messages.push({
+        role: "assistant",
+        content: aiReply,
+      });
+
+      // ৭. সবশেষে ডাটাবেসে সেভ করি
+      conversation.updatedAt = new Date();
+      await conversation.save();
+    }
+
+    return NextResponse.json(conversation);
+  } catch (error) {
+    console.error("PATCH Error:", error);
+    return NextResponse.json({ error: "Failed to update" }, { status: 500 });
+  }
+}
