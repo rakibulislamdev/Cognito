@@ -18,7 +18,6 @@ export default function PromptBox() {
         const userPrompt = prompt;
         setPrompt('');
 
-
         let conversationId = params.conversationId as string;
         const isNewChat = !conversationId;
 
@@ -28,7 +27,6 @@ export default function PromptBox() {
         }
 
         try {
-
             addNewMessage(userPrompt, conversationId);
         } catch (error) {
             console.error("Failed to send:", error);

@@ -1,7 +1,7 @@
 
 "use client"
 import { ChatContext } from "@/context/ChatContext";
-import { Conversation, Message } from "@/lib/types/conversation";
+import { Conversation } from "@/lib/types/conversation";
 import React, { useEffect, useState } from "react";
 
 
@@ -12,21 +12,18 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     const [isTyping, setIsTyping] = useState(false);
 
     useEffect(() => {
-        const fetchConversations = async () => {
+        const fetchAllConversations = async () => {
             try {
-
-                const res = await fetch("/api/conversations");
+                const res = await fetch("/api/conversation");
                 const data = await res.json();
-
                 if (res.ok) {
                     setConversations(data);
                 }
             } catch (error) {
-                console.error("Error loading chats from DB:", error);
+                console.error("Error fetching conversations:", error);
             }
         };
-
-        fetchConversations();
+        fetchAllConversations();
     }, []);
 
     // const addNewMessage = (content: string, conversationId?: string) => {
@@ -59,45 +56,57 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     //     });
     // };
 
+    // ChatContext.tsx er bhetor
     const addNewMessage = async (content: string, conversationId: string) => {
-
         const userMessage = {
-            _id: Date.now().toString(),
+            _id: Date.now().toString(), // Temporary ID
             role: "user",
             content: content,
-            createdAt: new Date().toISOString(),
+            createdAt: new Date(),
         };
 
-        setConversations((prev) => {
-            const exists = prev.find((c) => c._id === conversationId);
+        // ১. API response ashar AG-I context update kora (Optimistic Update)
+        setConversations((prev: any) => {
+            const exists = prev.find((c: any) => c._id === conversationId);
             if (exists) {
-                return prev.map((c) =>
-                    c._id === conversationId ? { ...c, messages: [...c.messages, userMessage] } : c
+                // Jodi purono chat hoy, sudhu user message-ti push kora
+                return prev.map((c: any) =>
+                    c._id === conversationId
+                        ? { ...c, messages: [...c.messages, userMessage] }
+                        : c
                 );
             } else {
-                return [...prev, { _id: conversationId, title: content.slice(0, 20), messages: [userMessage] }];
+                // Jodi notun chat hoy, pura conversation structure create kora
+                return [
+                    ...prev,
+                    {
+                        _id: conversationId,
+                        title: content.slice(0, 30),
+                        messages: [userMessage],
+                    },
+                ];
             }
         });
 
-        setIsTyping(true);
+        setIsTyping(true); // AI thinking shuru
 
         try {
             const res = await fetch("/api/conversation", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ content, conversationId }),
+                body: JSON.stringify({ conversationId, content }),
             });
 
-            const updatedData = await res.json();
+            const updatedConversation = await res.json();
 
-
-            setConversations((prev) =>
-                prev.map((c) => (c._id === conversationId ? updatedData : c))
+            // ২. API response ashar por temporary data-ti real data diye replace kora
+            setConversations((prev: any) =>
+                prev.map((c: any) =>
+                    c._id === conversationId ? updatedConversation : c
+                )
             );
-
-            return updatedData;
         } catch (error) {
-            console.error("API Error:", error);
+            console.error("Error adding message:", error);
         } finally {
             setIsTyping(false);
         }
@@ -106,7 +115,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
 
     return (
-        <ChatContext.Provider value={{ conversations, addNewMessage, isTyping }}>
+        <ChatContext.Provider value={{ conversations, setConversations, addNewMessage, isTyping }}>
             {children}
         </ChatContext.Provider>
     );
