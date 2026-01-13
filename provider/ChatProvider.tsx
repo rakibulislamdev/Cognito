@@ -26,37 +26,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         fetchAllConversations();
     }, []);
 
-    // const addNewMessage = (content: string, conversationId?: string) => {
-    //     const currentId = conversationId || crypto.randomUUID();
 
-    //     const newMessage: Message = {
-    //         id: crypto.randomUUID(),
-    //         role: "user",
-    //         content: content,
-    //         createdAt: new Date().toLocaleTimeString(),
-    //     };
-
-    //     setConversations((prev) => {
-    //         const existingConv = prev.find(c => c.id === currentId);
-
-    //         if (existingConv) {
-    //             return prev.map(c =>
-    //                 c.id === currentId
-    //                     ? { ...c, messages: [...c.messages, newMessage] }
-    //                     : c
-    //             );
-    //         } else {
-
-    //             return [...prev, {
-    //                 id: currentId,
-    //                 title: content.slice(0, 10) + "...",
-    //                 messages: [newMessage]
-    //             }];
-    //         }
-    //     });
-    // };
-
-    // ChatContext.tsx er bhetor
     const addNewMessage = async (content: string, conversationId: string) => {
         const userMessage = {
             _id: Date.now().toString(), // Temporary ID
