@@ -9,7 +9,7 @@ export default function ThinkingIndicator() {
             <div className="flex-1">
                 <div className="bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 inline-block shadow-sm">
                     <div className="flex space-x-1.5 items-center">
-                        <span className="text-xs text-gray-500 ml-2 font-medium">AI is thinking...</span>
+                        <span className="text-xs text-gray-500 ml-2 font-medium">Thinking...</span>
                         <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                         <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
                         <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"></div>
