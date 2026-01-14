@@ -1,5 +1,3 @@
-
-
 export default function ThinkingIndicator() {
     return (
         <div className="flex items-start space-x-3 animate-in fade-in duration-500">
