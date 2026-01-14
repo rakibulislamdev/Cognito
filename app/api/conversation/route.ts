@@ -23,6 +23,7 @@ export async function POST(req: Request) {
         smartTitle = await generateGeminiReply(titlePrompt);
         smartTitle = smartTitle.replace(/["']/g, "").trim();
       } catch (error) {
+        console.error("Error generating smart title:", error);
         smartTitle = content.slice(0, 30);
       }
 
@@ -54,20 +55,31 @@ export async function GET() {
     const allConversations = await Conversations.find().sort({ updatedAt: -1 });
     return NextResponse.json(allConversations);
   } catch (err) {
-    return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch", err },
+      { status: 500 }
+    );
   }
 }
 
 export async function PATCH(req: Request) {
   try {
     await connectDB();
-    const { conversationId, messageId, content } = await req.json();
+    const { conversationId, messageId, content, title } = await req.json();
 
     // ১. প্রথমে পুরো কনভারসেশনটি খুঁজে বের করি
     const conversation = await Conversations.findById(conversationId);
 
     if (!conversation) {
       return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+    }
+
+    if (title) {
+      title.trim();
+      conversation.title = title;
+      conversation.updatedAt = new Date();
+      await conversation.save();
+      return NextResponse.json(conversation);
     }
 
     // ২. যে মেসেজটি এডিট করা হয়েছে, সেটির পজিশন (Index) খুঁজে বের করি
@@ -101,5 +113,23 @@ export async function PATCH(req: Request) {
   } catch (error) {
     console.error("PATCH Error:", error);
     return NextResponse.json({ error: "Failed to update" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    await connectDB();
+    const { conversationId } = await req.json();
+
+    const conversation = await Conversations.findByIdAndDelete(conversationId);
+
+    if (!conversation) {
+      return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, id: conversationId });
+  } catch (error) {
+    console.error("DELETE Error:", error);
+    return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
   }
 }

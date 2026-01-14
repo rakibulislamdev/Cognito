@@ -8,6 +8,7 @@ export default function PromptBox() {
     const [prompt, setPrompt] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
+
     const { addNewMessage } = useChat();
     const params = useParams();
     const router = useRouter();
@@ -50,6 +51,7 @@ export default function PromptBox() {
             </div>
             <div className="flex items-end justify-end mt-3">
                 <button
+                    disabled={isLoading}
                     onClick={handleSend}
                     className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors cursor-pointer"
                 >

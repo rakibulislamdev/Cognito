@@ -4,9 +4,17 @@ import { Conversation } from "@/lib/types/conversation";
 
 interface ChatContextType {
     conversations: Conversation[];
-    addNewMessage: (content: string, conversationId?: string) => void;
+    isTyping: boolean;
+    addNewMessage: (content: string, conversationId: string) => Promise<void>;
+    updateMessage: (
+        conversationId: string,
+        messageId: string,
+        newContent: string
+    ) => Promise<void>;
+    updateTitle: (id: string, newTitle: string) => Promise<void>;
+    deleteConversation: (id: string) => Promise<void>;
+    setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>;
 }
-
 
 export const ChatContext = createContext<ChatContextType | undefined>(undefined);
 

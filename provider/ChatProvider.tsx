@@ -5,12 +5,10 @@ import { Conversation } from "@/lib/types/conversation";
 import React, { useEffect, useState } from "react";
 
 
-
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [isTyping, setIsTyping] = useState(false);
-
     useEffect(() => {
         const fetchAllConversations = async () => {
             try {
@@ -85,19 +83,20 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
 
     const addNewMessage = async (content: string, conversationId: string) => {
+        if (!conversationId) return;
         const userMessage = {
-            _id: Date.now().toString(), // Temporary ID
-            role: "user",
+            _id: Date.now().toString(),
+            role: "user" as const,
             content: content,
-            createdAt: new Date(),
+            createdAt: new Date().toISOString(),
         };
 
         // ১. API response ashar AG-I context update kora (Optimistic Update)
-        setConversations((prev: any) => {
-            const exists = prev.find((c: any) => c._id === conversationId);
+        setConversations((prev: Conversation[]) => {
+            const exists = prev.find((c: Conversation) => c._id === conversationId);
             if (exists) {
                 // Jodi purono chat hoy, sudhu user message-ti push kora
-                return prev.map((c: any) =>
+                return prev.map((c: Conversation) =>
                     c._id === conversationId
                         ? { ...c, messages: [...c.messages, userMessage] }
                         : c
@@ -110,6 +109,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
                         _id: conversationId,
                         title: content.slice(0, 30),
                         messages: [userMessage],
+                        updatedAt: new Date().toISOString(),
                     },
                 ];
             }
@@ -127,8 +127,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
             const updatedConversation = await res.json();
 
             // ২. API response ashar por temporary data-ti real data diye replace kora
-            setConversations((prev: any) =>
-                prev.map((c: any) =>
+            setConversations((prev: Conversation[]) =>
+                prev.map((c: Conversation) =>
                     c._id === conversationId ? updatedConversation : c
                 )
             );
@@ -140,9 +140,63 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
 
+    const updateTitle = async (id: string, newTitle: string) => {
+
+        const previousConversations = [...conversations];
+
+        try {
+            setConversations(prev => prev.map(c => c._id === id ? { ...c, title: newTitle } : c))
+
+            const res = await fetch(`/api/conversation`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    conversationId: id,
+                    title: newTitle
+                })
+
+            })
+
+            if (res.ok) {
+                const updatedConversation = await res.json();
+                setConversations(prev => prev.map(c => c._id === id ? updatedConversation : c))
+            } else {
+                setConversations(previousConversations);
+            }
+
+
+        } catch (error) {
+            console.error("Update title failed", error);
+            setConversations(previousConversations);
+        }
+    }
+
+
+    const deleteConversation = async (id: string) => {
+        const previousConversations = [...conversations];
+        try {
+            setConversations(prev => prev.filter(c => c._id !== id))
+
+            const res = await fetch(`/api/conversation`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ conversationId: id })
+            })
+
+            if (!res.ok) {
+                setConversations(previousConversations);
+            }
+
+        } catch (error) {
+            console.error("Delete conversation failed", error);
+            setConversations(previousConversations);
+        }
+    }
+
+
 
     return (
-        <ChatContext.Provider value={{ conversations, setConversations, addNewMessage, isTyping, updateMessage }}>
+        <ChatContext.Provider value={{ conversations, setConversations, addNewMessage, isTyping, updateMessage, updateTitle, deleteConversation }}>
             {children}
         </ChatContext.Provider>
     );
