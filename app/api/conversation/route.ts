@@ -20,8 +20,10 @@ export async function POST(req: Request) {
 
       let smartTitle;
       try {
-        smartTitle = await generateGeminiReply(titlePrompt);
-        smartTitle = smartTitle.replace(/["']/g, "").trim();
+        const aiReply = await generateGeminiReply(titlePrompt);
+        smartTitle = (aiReply || content.slice(0, 30))
+          .replace(/["']/g, "")
+          .trim();
       } catch (error) {
         console.error("Error generating smart title:", error);
         smartTitle = content.slice(0, 30);
